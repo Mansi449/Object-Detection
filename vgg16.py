@@ -11,8 +11,7 @@
 import numpy as np
 import tensorflow as tf
 from scipy.misc import imread, imresize
-from imagenet_classes import class_names
-
+class_names = ['face','non-face']
 
 class vgg16:
     def __init__(self, imgs, weights=None, sess=None):
@@ -242,7 +241,7 @@ class vgg16:
                                                          stddev=1e-1), name='weights')
             fc3b = tf.Variable(tf.constant(1.0, shape=[16], dtype=tf.float32),
                                  trainable=True, name='biases')
-            self.fc3l = tf.nn.bias_add(tf.matmul(self.fc2, fc3w), fc3b)
+            fc3l = tf.nn.bias_add(tf.matmul(self.fc2, fc3w), fc3b)
             self.fc3 = tf.nn.relu(fc3l)
             self.parameters += [fc3w, fc3b]
             
@@ -266,12 +265,12 @@ class vgg16:
 if __name__ == '__main__':
     sess = tf.Session()
     imgs = tf.placeholder(tf.float32, [None, 224, 224, 3])
-    vgg = vgg16(imgs, 'vgg16_weights.npz', sess)
+    vgg = vgg16(imgs, 'init_weights.npz', sess)
 
-    img1 = imread('ban.png', mode='RGB')
+    img1 = imread('img.png', mode='RGB')
     img1 = imresize(img1, (224, 224))
 
     prob = sess.run(vgg.probs, feed_dict={vgg.imgs: [img1]})[0]
-    preds = (np.argsort(prob)[::-1])[0:5]
+    preds = (np.argsort(prob)[::-1])[:]
     for p in preds:
         print (class_names[p], prob[p])
