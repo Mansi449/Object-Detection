@@ -3,10 +3,12 @@ import tensorflow as tf
 from scipy.misc import imread, imresize
 from vgg16 import vgg16
 import math
+import matplotlib.pyplot as plt
 from utils import *
 
-def model(X_train, Y_train, learning_rate=0.009, X=None, Y=None, weights=None, sess=None, num_epochs=3, minibatch_size=5):
+def model(X_train, Y_train, learning_rate=0.009, X=None, Y=None, weights=None, sess=None, num_epochs=3, minibatch_size=5, print_cost=True):
     m = X_train.shape[0]
+    costs = []
     if weights is not None and sess is not None:
         vgg = vgg16(X, weights, sess)
     fc4l = vgg.fc4l
@@ -15,12 +17,25 @@ def model(X_train, Y_train, learning_rate=0.009, X=None, Y=None, weights=None, s
     init = tf.global_variables_initializer()
     sess.run(init)
     for epoch in range(num_epochs):
-        # minibatch_cost = 0.
-        # num_minibatches = int(m / minibatch_size)
+        minibatch_cost = 0.
+        num_minibatches = int(m / minibatch_size)
         minibatches = random_mini_batches(X_train, Y_train, minibatch_size)
         for (minibatch_X, minibatch_Y) in minibatches:
             _, temp_cost = sess.run([optimizer, cost], feed_dict={Y:minibatch_Y, vgg.imgs:minibatch_X})
-            print(temp_cost)            
+            minibatch_cost += temp_cost / num_minibatches
+        # Print the cost every epoch
+        if print_cost == True and epoch % 5 == 0:
+            print ("Cost after epoch %i: %f" % (epoch, minibatch_cost))
+        if print_cost == True and epoch % 1 == 0:
+            costs.append(minibatch_cost)
+    
+    
+    # plot the cost
+    plt.plot(np.squeeze(costs))
+    plt.ylabel('cost')
+    plt.xlabel('iterations (per tens)')
+    plt.title("Learning rate =" + str(learning_rate))
+    plt.show()
 
 sess = tf.Session()
 X = tf.placeholder(tf.float32, [None, 224, 224, 3])
@@ -32,7 +47,5 @@ count = -1
 for y in Y_train:
     count += 1
     Y_train[count] = [0,1] if Y_train[count][0]<=Y_train[count][1] else [1,0]
-#img1 = imread('img.png', mode='RGB')
-#img1 = imresize(img1, (224, 224))
-test(X_train, Y_train, sess)
-# model(X_train, Y_train, 0.009, X, Y, 'init_weights.npz', sess)
+# test(X_train, Y_train, sess)
+model(X_train, Y_train, 0.009, X, Y, 'init_weights.npz', sess)
