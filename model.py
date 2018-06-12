@@ -29,6 +29,16 @@ def model(X_train, Y_train, learning_rate=0.009, X=None, Y=None, weights=None, s
         if print_cost == True and epoch % 1 == 0:
             costs.append(minibatch_cost)
     
+    params = {}
+    keys = []
+    for key in sorted(np.load(weights));
+        keys.append(key)
+    index = -1
+
+    for item in vgg.parameters:
+        index += 1
+        params[keys[index]] = sess.run(item)
+    np.savez("parameters.npz",**params)
     
     # plot the cost
     plt.plot(np.squeeze(costs))
