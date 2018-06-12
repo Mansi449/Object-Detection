@@ -213,9 +213,7 @@ class vgg16:
         # fc1
         with tf.name_scope('fc1') as scope:
             shape = int(np.prod(self.pool5.get_shape()[1:]))
-            fc1w = tf.Variable(tf.truncated_normal([shape, 4096],
-                                                         dtype=tf.float32,
-                                                         stddev=1e-1), name='weights')
+            fc1w = tf.Variable(tf.zeros([shape, 4096], dtype=tf.float32), name='weights')
             fc1b = tf.Variable(tf.constant(1.0, shape=[4096], dtype=tf.float32),
                                  trainable=True, name='biases')
             pool5_flat = tf.reshape(self.pool5, [-1, shape])
@@ -254,7 +252,6 @@ class vgg16:
                                  trainable=True, name='biases')
             self.fc4l = tf.nn.bias_add(tf.matmul(self.fc3, fc4w), fc4b)
             self.parameters += [fc4w, fc4b]
-
     def load_weights(self, weight_file, sess):
         weights = np.load(weight_file)
         keys = sorted(weights.keys())
