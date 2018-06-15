@@ -5,8 +5,9 @@ from vgg16 import vgg16
 import math
 import matplotlib.pyplot as plt
 from utils import *
+import h5py
 
-def model(X_train, Y_train, learning_rate=0.009, X=None, Y=None, weights=None, sess=None, num_epochs=3, minibatch_size=5, print_cost=True):
+def model(X_train, Y_train, learning_rate=0.009, X=None, Y=None, weights=None, sess=None, num_epochs=10, minibatch_size=5, print_cost=True):
     m = X_train.shape[0]
     costs = []
     if weights is not None and sess is not None:
@@ -24,22 +25,20 @@ def model(X_train, Y_train, learning_rate=0.009, X=None, Y=None, weights=None, s
             _, temp_cost = sess.run([optimizer, cost], feed_dict={Y:minibatch_Y, vgg.imgs:minibatch_X})
             minibatch_cost += temp_cost / num_minibatches
         # Print the cost every epoch
-        if print_cost == True and epoch % 5 == 0:
+        if print_cost == True and epoch % 1 == 0:
             print ("Cost after epoch %i: %f" % (epoch, minibatch_cost))
         if print_cost == True and epoch % 1 == 0:
             costs.append(minibatch_cost)
-    
     params = {}
     keys = []
-    for key in sorted(np.load(weights));
+    for key in sorted(np.load(weights)):
         keys.append(key)
     index = -1
 
     for item in vgg.parameters:
         index += 1
         params[keys[index]] = sess.run(item)
-    np.savez("parameters.npz",**params)
-    
+    np.savez("output_weight", **params)
     # plot the cost
     plt.plot(np.squeeze(costs))
     plt.ylabel('cost')
@@ -48,14 +47,31 @@ def model(X_train, Y_train, learning_rate=0.009, X=None, Y=None, weights=None, s
     plt.show()
 
 sess = tf.Session()
+file1 = h5py.File('faceData_v2.h5','r')
+file2 = h5py.File('nonface_small.h5','r')
+Y = np.array([[1,0]])
+X_train1 = np.array(file1["X_train"])
+X_train2 = np.array(file2["X_train_30000"])
+count = -1
+fac = np.array([[1,0]])
+non_fac = np.array([[0,1]])
+for data in X_train1:
+    count += 1
+    if count == 10:
+        break
+    Y = np.concatenate((Y,fac),axis=0)
+for data in X_train2:
+    if count == 20:
+        break
+    count += 1
+    Y = np.concatenate((Y,non_fac),axis=0)
+X = np.concatenate((X_train1[0:10,:,:,:],X_train2[0:10,:,:,:]), axis=0)
+X_train1 = None
+X_train2 = None
+permutation = np.random.permutation(count)
+X_train = X[permutation,:,:,:]
+Y_train = Y[permutation,:]
 X = tf.placeholder(tf.float32, [None, 224, 224, 3])
 Y = tf.placeholder(tf.float32, [None, 2])
-# Y = tf.constant([0,1], dtype = tf.float32)
-X_train = np.random.randint(225,size=(11,224,224,3))
-Y_train = np.random.randint(10,size=(11,2))
-count = -1
-for y in Y_train:
-    count += 1
-    Y_train[count] = [0,1] if Y_train[count][0]<=Y_train[count][1] else [1,0]
-# test(X_train, Y_train, sess)
+print('data loaded')
 model(X_train, Y_train, 0.009, X, Y, 'init_weights.npz', sess)
