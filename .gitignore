@@ -1,3 +1,6 @@
-init_weights.npz
-img.png
+*.npz
+*.png
+*.h5
+*.ipynb
 __pycache__
+*/
