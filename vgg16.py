@@ -8,7 +8,7 @@ class vgg16:
         self.imgs = imgs
         self.convlayers()
         self.fc_layers()
-        self.probs = tf.nn.softmax(self.fc4l)
+        self.probs = tf.nn.softmax(self.fc3l)
         if weights is not None and sess is not None:
             self.load_weights(weights, sess)
 
@@ -194,8 +194,8 @@ class vgg16:
 
         # pool5
         self.pool5 = tf.nn.max_pool(self.conv5_3,
-                               ksize=[1, 2, 2, 1],
-                               strides=[1, 2, 2, 1],
+                               ksize=[1, 5, 5, 1],
+                               strides=[1, 5, 5, 1],
                                padding='SAME',
                                name='pool4')
 
@@ -203,20 +203,20 @@ class vgg16:
         # fc1
         with tf.name_scope('fc1') as scope:
             shape = int(np.prod(self.pool5.get_shape()[1:]))
-            fc1w = tf.Variable(tf.zeros([shape, 4096], dtype=tf.float32), name='weights')
-            fc1b = tf.Variable(tf.constant(1.0, shape=[4096], dtype=tf.float32),
+            fc1w = tf.Variable(tf.zeros([shape, 1024], dtype=tf.float32), name='weights')
+            fc1b = tf.Variable(tf.constant(1.0, shape=[1024], dtype=tf.float32),
                                  trainable=True, name='biases')
             pool5_flat = tf.reshape(self.pool5, [-1, shape])
             fc1l = tf.nn.bias_add(tf.matmul(pool5_flat, fc1w), fc1b)
             self.fc1 = tf.nn.relu(fc1l)
             self.parameters += [fc1w, fc1b]
             
-            # fc2
+        # fc2
         with tf.name_scope('fc2') as scope:
-            fc2w = tf.Variable(tf.truncated_normal([4096, 256],
+            fc2w = tf.Variable(tf.truncated_normal([1024, 128],
                                                          dtype=tf.float32,
                                                          stddev=1e-1), name='weights')
-            fc2b = tf.Variable(tf.constant(1.0, shape=[256], dtype=tf.float32),
+            fc2b = tf.Variable(tf.constant(1.0, shape=[128], dtype=tf.float32),
                                  trainable=True, name='biases')
             fc2l = tf.nn.bias_add(tf.matmul(self.fc1, fc2w), fc2b)
             self.fc2 = tf.nn.relu(fc2l)
@@ -224,24 +224,14 @@ class vgg16:
 
         # fc3
         with tf.name_scope('fc3') as scope:
-            fc3w = tf.Variable(tf.truncated_normal([256, 16],
+            fc3w = tf.Variable(tf.truncated_normal([128, 2],
                                                          dtype=tf.float32,
                                                          stddev=1e-1), name='weights')
-            fc3b = tf.Variable(tf.constant(1.0, shape=[16], dtype=tf.float32),
+            fc3b = tf.Variable(tf.constant(1.0, shape=[2], dtype=tf.float32),
                                  trainable=True, name='biases')
-            fc3l = tf.nn.bias_add(tf.matmul(self.fc2, fc3w), fc3b)
-            self.fc3 = tf.nn.relu(fc3l)
+            self.fc3l = tf.nn.bias_add(tf.matmul(self.fc2, fc3w), fc3b)
             self.parameters += [fc3w, fc3b]
-            
-        # fc4
-        with tf.name_scope('fc4') as scope:
-            fc4w = tf.Variable(tf.truncated_normal([16, 2],
-                                                         dtype=tf.float32,
-                                                         stddev=1e-1), name='weights')
-            fc4b = tf.Variable(tf.constant(1.0, shape=[2], dtype=tf.float32),
-                                 trainable=True, name='biases')
-            self.fc4l = tf.nn.bias_add(tf.matmul(self.fc3, fc4w), fc4b)
-            self.parameters += [fc4w, fc4b]
+
     def load_weights(self, weight_file, sess):
         weights = np.load(weight_file)
         keys = sorted(weights.keys())
@@ -252,7 +242,7 @@ class vgg16:
 if __name__ == '__main__':
     sess = tf.Session()
     imgs = tf.placeholder(tf.float32, [None, 224, 224, 3])
-    vgg = vgg16(imgs, 'init_weights.npz', sess)
+    vgg = vgg16(imgs, 'output_weight.npz', sess)
 
     img1 = imread('img.png', mode='RGB')
     img1 = imresize(img1, (224, 224))

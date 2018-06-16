@@ -32,12 +32,11 @@ def random_mini_batches(X, Y, mini_batch_size):
 def test(X_test, Y_test, sess):
         X = tf.placeholder(dtype=tf.float32, shape=[None, 224,224,3])
         Y = tf.placeholder(dtype=tf.float32, shape=[None, 2])
-        vgg = vgg16(X, 'init_weights.npz', sess)
-        predict_op = tf.argmax(vgg.fc4l, 1)
+        vgg = vgg16(X, 'output_weight.npz', sess)
+        predict_op = tf.argmax(vgg.fc3l, 1)
         correct_prediction = tf.equal(predict_op, tf.argmax(Y, 1))
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
         # train_accuracy = accuracy.eval({vgg.imgs: X_train, Y: Y_train})
         test_accuracy = sess.run(accuracy, feed_dict={vgg.imgs: X_test, Y: Y_test})
         # print("Train Accuracy:", train_accuracy)
         print("Test Accuracy:", test_accuracy)
-   

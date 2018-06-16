@@ -12,8 +12,8 @@ def model(X_train, Y_train, learning_rate=0.009, X=None, Y=None, weights=None, s
     costs = []
     if weights is not None and sess is not None:
         vgg = vgg16(X, weights, sess)
-    fc4l = vgg.fc4l
-    cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=fc4l, labels=Y))
+    fc3l = vgg.fc3l
+    cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=fc3l, labels=Y))
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
     init = tf.global_variables_initializer()
     sess.run(init)
@@ -47,6 +47,8 @@ def model(X_train, Y_train, learning_rate=0.009, X=None, Y=None, weights=None, s
     plt.show()
 
 sess = tf.Session()
+face_count = 0
+non_face_count = 5
 file1 = h5py.File('faceData_v2.h5','r')
 file2 = h5py.File('nonface_small.h5','r')
 Y = np.array([[1,0]])
@@ -57,15 +59,15 @@ fac = np.array([[1,0]])
 non_fac = np.array([[0,1]])
 for data in X_train1:
     count += 1
-    if count == 10:
+    if count == face_count:
         break
     Y = np.concatenate((Y,fac),axis=0)
 for data in X_train2:
-    if count == 20:
+    if count == non_face_count+ face_count:
         break
     count += 1
     Y = np.concatenate((Y,non_fac),axis=0)
-X = np.concatenate((X_train1[0:10,:,:,:],X_train2[0:10,:,:,:]), axis=0)
+X = np.concatenate((X_train1[0:face_count,:,:,:],X_train2[0:non_face_count,:,:,:]), axis=0)
 X_train1 = None
 X_train2 = None
 permutation = np.random.permutation(count)
@@ -74,4 +76,5 @@ Y_train = Y[permutation,:]
 X = tf.placeholder(tf.float32, [None, 224, 224, 3])
 Y = tf.placeholder(tf.float32, [None, 2])
 print('data loaded')
-model(X_train, Y_train, 0.009, X, Y, 'init_weights.npz', sess)
+test(X_train, Y_train, sess)
+# model(X_train, Y_train, 0.009, X, Y, 'output_weight.npz', sess)
